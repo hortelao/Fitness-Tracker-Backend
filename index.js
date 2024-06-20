@@ -22,23 +22,94 @@ const db = new pg.Client({
 });
 db.connect();
 
+//API Routes
+
+/*
+Route to create a user on DB
+*/
 app.post("/create-user", async (req, res) => {
-  // Send a POST request
-      const fName = req.body.fName;
-      const lName = req.body.lName;
-      const email = req.body.email;
-      const password = req.body.password;
-    
-  
-    db.query("INSERT INTO users (firstName, lastName, email, password) VALUES ($1, $2, $3, $4)", [fName, lName, email, password], (err, result) => {
-      if(err) {
-        res.sendStatus(400);
-      } else {
-        res.sendStatus(200);
-      }
+
+  const fName = req.body.fName;
+  const lName = req.body.lName;
+  const email = req.body.email;
+  const password = req.body.password;
+
+
+  db.query("INSERT INTO users (firstName, lastName, email, password) VALUES ($1, $2, $3, $4)", [fName, lName, email, password], (err, result) => {
+    if (err) {
+      res.sendStatus(400);
+    } else {
+      res.sendStatus(200);
+    }
+  });
 });
 
-  
+
+/*
+Route to get a user from DB
+*/
+app.post("/auth-user", async (req, res) => {
+
+  const email = req.body.email;
+  const password = req.body.password;
+  const token = req.body.token;
+
+  const result = await db.query("SELECT id FROM users WHERE email=$1 AND password=$2", [email, password]);
+  if (result.rowCount > 0 && token) {
+    db.query("UPDATE users SET token = $1 WHERE id = $2", [token, result.rows[0].id])
+    res.json(result.rows);
+  } else {
+    res.sendStatus(400);
+  }
+});
+
+/*
+Route to get all activities from a specific user from DB
+*/
+app.get("/activities/:user_id", async (req, res) => {
+  let userId = parseInt(req.params.user_id);
+  const result = await db.query("SELECT * FROM activity WHERE id_user=$1", [userId]);
+
+  res.json(result.rows);
+});
+
+
+/*
+Route to create an activity on DB
+*/
+app.post("/activity/create-activity", async (req, res) => {
+
+  const idUser = req.body.idUser;
+  const date = req.body.date;
+  const exercise = req.body.exercise;
+
+
+  const result = await db.query("INSERT INTO activity (id_user, date, exercise) VALUES ($1, $2, $3) RETURNING id", [idUser, date, exercise]);
+  res.json(result.rows);
+});
+
+/*
+Route to get a specific series from a specific activity from DB
+*/
+app.get("/activity/series/:id", async (req, res) => {
+  let searchId = parseInt(req.params.id);
+  const result = await db.query("SELECT * FROM series WHERE id_activity=$1", [searchId]);
+
+  res.json(result.rows);
+});
+
+/*
+Route to create a serie on DB
+*/
+app.post("/activity/series/create-serie", async (req, res) => {
+
+  const idActivity = req.body.idActivity;
+  const reps = req.body.reps;
+  const weight = req.body.weight;
+
+
+  const result = await db.query("INSERT INTO series (id_activity, reps, weight) VALUES ($1, $2, $3)", [idActivity, reps, weight]);
+  res.sendStatus(200);
 });
 
 
