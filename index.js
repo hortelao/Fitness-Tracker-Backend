@@ -3,12 +3,20 @@ import bodyParser from "body-parser";
 import pg from "pg";
 import bcrypt from "bcrypt";
 import env from "dotenv";
+import cors from "cors";
 
 const app = express();
 const port = 3000;
 const saltRounds = 10;
 env.config();
 
+// CORS configuration
+app.use(cors({
+  origin: 'http://localhost:3001',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true
+}));
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const API = process.env.API_URL;
@@ -49,16 +57,17 @@ app.post("/create-user", async (req, res) => {
 Route to get a user from DB
 */
 app.post("/auth-user", async (req, res) => {
+  const { email, password, token } = req.body;
 
-  const email = req.body.email;
-  const password = req.body.password;
-  const token = req.body.token;
-
-  const result = await db.query("SELECT id FROM users WHERE email=$1 AND password=$2", [email, password]);
-  if (result.rowCount > 0 && token) {
-    db.query("UPDATE users SET token = $1 WHERE id = $2", [token, result.rows[0].id])
-    res.json(result.rows);
-  } else {
+  try {
+    const result = await db.query("SELECT id FROM users WHERE email=$1 AND password=$2", [email, password]);
+    if (result.rowCount > 0 && token) {
+      await db.query("UPDATE users SET token = $1 WHERE id = $2", [token, result.rows[0].id]);
+      res.json(result.rows);
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (err) {
     res.sendStatus(400);
   }
 });
