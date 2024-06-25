@@ -57,10 +57,10 @@ app.post("/create-user", async (req, res) => {
 Route to get a user from DB
 */
 app.post("/auth-user", async (req, res) => {
-  const { email, password, token } = req.body;
+  const { email, token } = req.body;
 
   try {
-    const result = await db.query("SELECT id FROM users WHERE email=$1 AND password=$2", [email, password]);
+    const result = await db.query("SELECT id, password FROM users WHERE email=$1", [email]);
     if (result.rowCount > 0 && token) {
       await db.query("UPDATE users SET token = $1 WHERE id = $2", [token, result.rows[0].id]);
       res.json(result.rows);
