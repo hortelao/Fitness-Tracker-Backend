@@ -41,13 +41,14 @@ app.post("/create-user", async (req, res) => {
   const lName = req.body.lName;
   const email = req.body.email;
   const password = req.body.password;
+  const token = req.body.token;
 
 
-  db.query("INSERT INTO users (firstName, lastName, email, password) VALUES ($1, $2, $3, $4)", [fName, lName, email, password], (err, result) => {
+  db.query("INSERT INTO users (firstName, lastName, email, password, token) VALUES ($1, $2, $3, $4, $5) RETURNING id", [fName, lName, email, password, token], (err, result) => {
     if (err) {
       res.sendStatus(400);
     } else {
-      res.sendStatus(200);
+      res.json(result.rows);
     }
   });
 });
@@ -71,6 +72,16 @@ app.post("/auth-user", async (req, res) => {
     res.sendStatus(400);
   }
 });
+
+
+app.get("/check-token/:id", async (req, res) => {
+  let searchId = parseInt(req.params.id);
+  const result = await db.query("SELECT token FROM users WHERE id=$1", [searchId]);
+
+  res.json(result.rows);
+});
+
+
 
 /*
 Route to get all activities from a specific user from DB
