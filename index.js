@@ -16,6 +16,7 @@ app.use(cors({
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -59,7 +60,6 @@ Route to get a user from DB
 */
 app.post("/auth-user", async (req, res) => {
   const { email, token } = req.body;
-
   try {
     const result = await db.query("SELECT id, password FROM users WHERE email=$1", [email]);
     if (result.rowCount > 0 && token) {
@@ -73,12 +73,18 @@ app.post("/auth-user", async (req, res) => {
   }
 });
 
-
+/*
+Route to get user info from DB
+*/
 app.get("/check-token/:id", async (req, res) => {
+  try {
   let searchId = parseInt(req.params.id);
-  const result = await db.query("SELECT token FROM users WHERE id=$1", [searchId]);
-
+  
+  const result = await db.query("SELECT firstname, lastname, email, token FROM users WHERE id=$1", [searchId]);
   res.json(result.rows);
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 
